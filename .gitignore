@@ -1,0 +1,16 @@
+
+build/
+
+.project
+
+.pydevproject
+
+dist/nimfa-1.0-py3.3.egg
+
+nimfa.egg-info/PKG-INFO
+
+nimfa.egg-info/SOURCES.txt
+
+nimfa.egg-info/dependency_links.txt
+
+nimfa.egg-info/top_level.txt
