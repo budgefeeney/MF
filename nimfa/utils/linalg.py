@@ -7,18 +7,14 @@
     Linear algebra helper routines and wrapper functions for handling sparse matrices and dense matrices representation.
 """
 
-import sys
-import copy
 import numpy as np
 import scipy
 import scipy.sparse as sp
 import scipy.sparse.linalg as sla
 import numpy.linalg as nla
-from operator import mul, div, eq, ne, add, ge, le, itemgetter
 from itertools import izip
-from math import sqrt, log, isnan, ceil
-from scipy.cluster.hierarchy import linkage, cophenet
-from scipy.special import erfc, erfcinv
+from math import sqrt
+from distutils.version import LooseVersion
 import warnings
 
 #
@@ -378,15 +374,15 @@ def _svd_right(X):
     """
     XXt = dot(X, X.T)
     if X.shape[0] > 1:
-        if '0.8' in scipy.version.version:
+        # In scipy 0.9.0 ARPACK interface has changed. eigen_symmetric routine was renamed to eigsh
+        # see
+        # http://docs.scipy.org/doc/scipy/reference/release.0.9.0.html#scipy-sparse
+        if LooseVersion(scipy.version.version) < LooseVersion('0.9.0'):
             val, u_vec = sla.eigen_symmetric(XXt, k=X.shape[0] - 1)
         else:
-            # In scipy 0.9.0 ARPACK interface has changed. eigen_symmetric routine was renamed to eigsh
-            # see
-            # http://docs.scipy.org/doc/scipy/reference/release.0.9.0.html#scipy-sparse
-            try:
+           try:
                 val, u_vec = sla.eigsh(XXt, k=X.shape[0] - 1)
-            except sla.ArpackNoConvergence, err:
+           except sla.ArpackNoConvergence, err:
                 # If eigenvalue iteration fails to converge, partially
                 # converged results can be accessed
                 val = err.eigenvalues
@@ -422,19 +418,19 @@ def _svd_left(X):
     """
     XtX = dot(X.T, X)
     if X.shape[1] > 1:
-        if '0.9' in scipy.version.version or '0.10' in scipy.version.version or '0.11' in scipy.version.version:
+        if LooseVersion(scipy.version.version) < LooseVersion('0.9.0'):
             # In scipy 0.9.0 ARPACK interface has changed. eigen_symmetric routine was renamed to eigsh
             # see
             # http://docs.scipy.org/doc/scipy/reference/release.0.9.0.html#scipy-sparse
             try:
-                val, v_vec = sla.eigsh(XtX, k=X.shape[1] - 1)
+                val, v_vec = sla.eigen_symmetric(XtX, k=X.shape[1] - 1)
             except sla.ArpackNoConvergence, err:
                 # If eigenvalue iteration fails to converge, partially
                 # converged results can be accessed
                 val = err.eigenvalues
                 v_vec = err.eigenvectors
         else:
-            val, v_vec = sla.eigen_symmetric(XtX, k=X.shape[1] - 1)
+            val, v_vec = sla.eigsh(XtX, k=X.shape[1] - 1)
     else:
         val, v_vec = nla.eigh(XtX.todense())
     # remove insignificant eigenvalues
